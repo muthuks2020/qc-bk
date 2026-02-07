@@ -1,0 +1,1147 @@
+{
+  "info": {
+    "name": "Appasamy QC API - Stage 1",
+    "description": "Complete API collection for Appasamy QC Application\n\n**Setup:**\n1. Set `base_url` variable (default: http://localhost:5000)\n2. Set `api_token` variable (default: local-dev-token-2026)\n\n**73 Endpoints across 14 modules**",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "appasamy-qc"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "api_token",
+      "value": "local-dev-token-2026",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "user_name",
+      "value": "Admin",
+      "type": "string"
+    },
+    {
+      "key": "user_role",
+      "value": "admin",
+      "type": "string"
+    },
+    {
+      "key": "user_email",
+      "value": "admin@appasamy.com",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{api_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.add({ key: 'X-User-Id', value: pm.variables.get('user_id') });",
+          "pm.request.headers.add({ key: 'X-User-Name', value: pm.variables.get('user_name') });",
+          "pm.request.headers.add({ key: 'X-User-Role', value: pm.variables.get('user_role') });",
+          "pm.request.headers.add({ key: 'X-User-Email', value: pm.variables.get('user_email') });"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Health Check (No Auth)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Departments",
+      "item": [
+        {
+          "name": "List Departments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/departments?page=1&per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "departments"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "20" },
+                { "key": "search", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Department",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"department_code\": \"DEPT-TEST\",\n  \"department_name\": \"Test Department\",\n  \"description\": \"Created via Postman\",\n  \"pass_source_location\": \"QC Quarantine\",\n  \"pass_destination_location\": \"Main Store\",\n  \"is_active\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/departments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "departments"]
+            }
+          }
+        },
+        {
+          "name": "Update Department",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"department_name\": \"Updated Department Name\",\n  \"description\": \"Updated via Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/departments/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "departments", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Department",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/departments/99",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "departments", "99"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories & Groups",
+      "item": [
+        {
+          "name": "List Categories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories?page=1&per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "categories"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_code\": \"CAT-TEST\",\n  \"category_name\": \"Test Category\",\n  \"icon\": \"🧪\",\n  \"description\": \"Test category via Postman\",\n  \"sort_order\": 10\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_name\": \"Updated Category\",\n  \"icon\": \"✅\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "categories", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Category",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories/99",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "categories", "99"]
+            }
+          }
+        },
+        {
+          "name": "List Groups by Category",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories/1/groups",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "categories", "1", "groups"]
+            }
+          }
+        },
+        {
+          "name": "Create Group under Category",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"group_code\": \"GRP-TEST\",\n  \"group_name\": \"Test Product Group\",\n  \"description\": \"Test group via Postman\",\n  \"sort_order\": 5\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/categories/1/groups",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "categories", "1", "groups"]
+            }
+          }
+        },
+        {
+          "name": "Update Product Group",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"group_name\": \"Updated Group Name\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/product-groups/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "product-groups", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Product Group",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/product-groups/99",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "product-groups", "99"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Units",
+      "item": [
+        {
+          "name": "List Units",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/units?page=1&per_page=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "units"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "50" },
+                { "key": "unit_type", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Unit",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unit_code\": \"TEST\",\n  \"unit_name\": \"Test Unit\",\n  \"unit_symbol\": \"tu\",\n  \"unit_type\": \"count\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/units",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "units"]
+            }
+          }
+        },
+        {
+          "name": "Update Unit",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unit_name\": \"Updated Unit Name\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/units/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "units", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Unit",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/units/99",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "units", "99"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Instruments",
+      "item": [
+        {
+          "name": "List Instruments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/instruments?page=1&per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "instruments"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "20" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "calibration_due", "value": "true", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Instrument",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"instrument_code\": \"INS-TEST-001\",\n  \"instrument_name\": \"Test Instrument\",\n  \"instrument_type\": \"Caliper\",\n  \"make\": \"Mitutoyo\",\n  \"model\": \"CD-15APX\",\n  \"serial_number\": \"TEST-2026-001\",\n  \"calibration_due_date\": \"2026-12-31\",\n  \"calibration_frequency_days\": 365,\n  \"department_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/instruments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "instruments"]
+            }
+          }
+        },
+        {
+          "name": "Update Instrument",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"instrument_name\": \"Updated Instrument\",\n  \"calibration_due_date\": \"2027-06-30\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/instruments/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "instruments", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Instrument",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/instruments/99",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "instruments", "99"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vendors",
+      "item": [
+        {
+          "name": "List Vendors",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/vendors?page=1&per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "vendors"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "20" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "is_approved", "value": "true", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Vendor",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vendor_code\": \"VND-TEST\",\n  \"vendor_name\": \"Test Vendor Pvt Ltd\",\n  \"vendor_type\": \"supplier\",\n  \"contact_person\": \"John Doe\",\n  \"email\": \"john@testvendor.com\",\n  \"phone\": \"044-12345678\",\n  \"mobile\": \"9876543210\",\n  \"address_line1\": \"123 Test Street\",\n  \"city\": \"Chennai\",\n  \"state\": \"Tamil Nadu\",\n  \"country\": \"India\",\n  \"pincode\": \"600001\",\n  \"gst_number\": \"33AABCT1234D1ZV\",\n  \"pan_number\": \"AABCT1234D\",\n  \"is_approved\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/vendors",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "vendors"]
+            }
+          }
+        },
+        {
+          "name": "Update Vendor",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vendor_name\": \"Updated Vendor Name\",\n  \"is_approved\": true,\n  \"approval_date\": \"2026-02-06\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/vendors/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "vendors", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Vendor",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/vendors/99",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "vendors", "99"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sampling Plans",
+      "item": [
+        {
+          "name": "List Sampling Plans",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/sampling-plans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sampling-plans"]
+            }
+          }
+        },
+        {
+          "name": "Get Sampling Plan by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/sampling-plans/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sampling-plans", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Sampling Plan",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_code\": \"SP-TEST\",\n  \"plan_name\": \"Test Sampling Plan\",\n  \"plan_type\": \"sp1\",\n  \"aql_level\": \"1.0\",\n  \"inspection_level\": \"normal\",\n  \"details\": [\n    { \"lot_size_min\": 2, \"lot_size_max\": 8, \"sample_size\": 2, \"accept_number\": 0, \"reject_number\": 1 },\n    { \"lot_size_min\": 9, \"lot_size_max\": 15, \"sample_size\": 3, \"accept_number\": 0, \"reject_number\": 1 },\n    { \"lot_size_min\": 16, \"lot_size_max\": 50, \"sample_size\": 5, \"accept_number\": 0, \"reject_number\": 1 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/sampling-plans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sampling-plans"]
+            }
+          }
+        },
+        {
+          "name": "Update Sampling Plan",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_name\": \"Updated Sampling Plan\",\n  \"aql_level\": \"1.5\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/sampling-plans/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sampling-plans", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Sampling Plan",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/sampling-plans/99",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sampling-plans", "99"]
+            }
+          }
+        },
+        {
+          "name": "Calculate Sample Size",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/sampling-plans/1/calculate-sample?lot_size=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sampling-plans", "1", "calculate-sample"],
+              "query": [
+                { "key": "lot_size", "value": "50" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "QC Plans",
+      "item": [
+        {
+          "name": "List QC Plans",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/qc-plans?page=1&per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "qc-plans"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "20" },
+                { "key": "status", "value": "active", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get QC Plan by ID (with stages & params)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/qc-plans/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "qc-plans", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create QC Plan",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_code\": \"QP-TEST-01\",\n  \"plan_name\": \"Test QC Plan\",\n  \"revision\": \"Rev-01\",\n  \"revision_date\": \"2026-02-06\",\n  \"effective_date\": \"2026-02-10\",\n  \"plan_type\": \"standard\",\n  \"inspection_stages\": 2,\n  \"requires_visual\": true,\n  \"requires_functional\": true,\n  \"status\": \"draft\",\n  \"stages\": [\n    {\n      \"stage_code\": \"STG-VIS\",\n      \"stage_name\": \"Visual Inspection\",\n      \"stage_type\": \"visual\",\n      \"stage_sequence\": 1,\n      \"inspection_type\": \"sampling\",\n      \"sampling_plan_id\": 1,\n      \"is_mandatory\": true,\n      \"parameters\": [\n        {\n          \"parameter_code\": \"P-VIS-01\",\n          \"parameter_name\": \"Surface Finish\",\n          \"checking_type\": \"visual\",\n          \"specification\": \"No scratches or dents\",\n          \"input_type\": \"pass_fail\",\n          \"is_mandatory\": true\n        }\n      ]\n    },\n    {\n      \"stage_code\": \"STG-FUN\",\n      \"stage_name\": \"Functional Test\",\n      \"stage_type\": \"functional\",\n      \"stage_sequence\": 2,\n      \"inspection_type\": \"sampling\",\n      \"sampling_plan_id\": 1,\n      \"is_mandatory\": true,\n      \"requires_instrument\": true,\n      \"parameters\": [\n        {\n          \"parameter_code\": \"P-FUN-01\",\n          \"parameter_name\": \"Output Voltage\",\n          \"checking_type\": \"functional\",\n          \"specification\": \"3.3V ± 0.1V\",\n          \"nominal_value\": 3.3,\n          \"tolerance_min\": 3.2,\n          \"tolerance_max\": 3.4,\n          \"input_type\": \"measurement\",\n          \"is_mandatory\": true\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/qc-plans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "qc-plans"]
+            }
+          }
+        },
+        {
+          "name": "Update QC Plan",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_name\": \"Updated QC Plan Name\",\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/qc-plans/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "qc-plans", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete QC Plan",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/qc-plans/99",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "qc-plans", "99"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Components",
+      "item": [
+        {
+          "name": "List Components",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/components?page=1&per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "components"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "20" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "category_id", "value": "", "disabled": true },
+                { "key": "status", "value": "active", "disabled": true },
+                { "key": "qc_required", "value": "true", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Component by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/components/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "components", "1"]
+            }
+          }
+        },
+        {
+          "name": "Validate Part Code (check unique)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/components/validate-part-code?part_code=BSC-TRD-001",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "components", "validate-part-code"],
+              "query": [
+                { "key": "part_code", "value": "BSC-TRD-001" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Component",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"part_code\": \"BSC-TEST-001\",\n  \"part_name\": \"Test Component\",\n  \"part_description\": \"Created via Postman\",\n  \"category_id\": 1,\n  \"product_group_id\": 1,\n  \"qc_required\": true,\n  \"qc_plan_id\": 1,\n  \"default_inspection_type\": \"sampling\",\n  \"default_sampling_plan_id\": 1,\n  \"test_cert_required\": true,\n  \"fqir_required\": false,\n  \"coc_required\": false,\n  \"pr_process_code\": \"direct_purchase\",\n  \"pr_process_name\": \"Direct Purchase\",\n  \"primary_vendor_id\": 1,\n  \"department_id\": 1,\n  \"status\": \"draft\",\n  \"checking_params\": [\n    {\n      \"checking_type\": \"visual\",\n      \"checking_point\": \"Surface Finish\",\n      \"specification\": \"No scratches\",\n      \"input_type\": \"pass_fail\",\n      \"sort_order\": 1,\n      \"is_mandatory\": true\n    },\n    {\n      \"checking_type\": \"functional\",\n      \"checking_point\": \"Output Voltage\",\n      \"specification\": \"3.3V ± 0.1V\",\n      \"nominal_value\": 3.3,\n      \"tolerance_min\": 3.2,\n      \"tolerance_max\": 3.4,\n      \"unit_id\": 9,\n      \"instrument_id\": 4,\n      \"input_type\": \"measurement\",\n      \"sort_order\": 2,\n      \"is_mandatory\": true\n    }\n  ],\n  \"specifications\": [\n    { \"spec_key\": \"Material\", \"spec_value\": \"ABS Plastic\" },\n    { \"spec_key\": \"Color\", \"spec_value\": \"White\" }\n  ],\n  \"vendor_mappings\": [\n    { \"vendor_id\": 1, \"is_primary\": true, \"is_approved\": true, \"unit_price\": 1500.00 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/components",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "components"]
+            }
+          }
+        },
+        {
+          "name": "Update Component",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"part_name\": \"Updated Component Name\",\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/components/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "components", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Component (soft)",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/components/99",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "components", "99"]
+            }
+          }
+        },
+        {
+          "name": "Duplicate Component",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"new_part_code\": \"BSC-TRD-001-COPY\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/components/1/duplicate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "components", "1", "duplicate"]
+            }
+          }
+        },
+        {
+          "name": "Export Components (CSV)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"format\": \"csv\",\n  \"filters\": {\n    \"status\": \"active\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/components/export",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "components", "export"]
+            }
+          }
+        },
+        {
+          "name": "Upload Component Document",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "component_id", "value": "1", "type": "text" },
+                { "key": "document_type", "value": "drawing", "type": "text" },
+                { "key": "file", "type": "file", "src": "" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/components/upload-document",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "components", "upload-document"]
+            }
+          }
+        },
+        {
+          "name": "Delete Component Document",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/components/documents/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "components", "documents", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Defect Types",
+      "item": [
+        {
+          "name": "List Defect Types",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/defect-types",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "defect-types"]
+            }
+          }
+        },
+        {
+          "name": "Create Defect Type",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"defect_code\": \"DEF-TEST\",\n  \"defect_name\": \"Test Defect\",\n  \"defect_category\": \"visual\",\n  \"severity_level\": 2,\n  \"description\": \"Test defect via Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/defect-types",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "defect-types"]
+            }
+          }
+        },
+        {
+          "name": "Update Defect Type",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"defect_name\": \"Updated Defect Name\",\n  \"severity_level\": 3\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/defect-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "defect-types", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Defect Type",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/defect-types/99",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "defect-types", "99"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rejection Reasons",
+      "item": [
+        {
+          "name": "List Rejection Reasons",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/rejection-reasons",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "rejection-reasons"]
+            }
+          }
+        },
+        {
+          "name": "Create Rejection Reason",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason_code\": \"REJ-TEST\",\n  \"reason_name\": \"Test Rejection Reason\",\n  \"reason_category\": \"quality\",\n  \"description\": \"Test reason via Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/rejection-reasons",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "rejection-reasons"]
+            }
+          }
+        },
+        {
+          "name": "Update Rejection Reason",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason_name\": \"Updated Rejection Reason\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/rejection-reasons/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "rejection-reasons", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Rejection Reason",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/rejection-reasons/99",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "rejection-reasons", "99"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Locations",
+      "item": [
+        {
+          "name": "List Locations",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/locations?page=1&per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "locations"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "20" },
+                { "key": "location_type", "value": "", "disabled": true },
+                { "key": "is_quarantine", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Location",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location_code\": \"LOC-TEST\",\n  \"location_name\": \"Test Location\",\n  \"location_type\": \"store\",\n  \"warehouse_name\": \"Main Warehouse\",\n  \"is_quarantine\": false,\n  \"is_restricted\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/locations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "locations"]
+            }
+          }
+        },
+        {
+          "name": "Update Location",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location_name\": \"Updated Location\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/locations/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "locations", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Location",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/api/v1/locations/99",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "locations", "99"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "System Config",
+      "item": [
+        {
+          "name": "Get All Config",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/system-config",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "system-config"]
+            }
+          }
+        },
+        {
+          "name": "Update Config Value",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"config_value\": \"10\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/system-config/inspection.overdue_days",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "system-config", "inspection.overdue_days"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Lookups (Dropdowns)",
+      "item": [
+        {
+          "name": "Lookup - Categories",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/lookups/categories",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "lookups", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Lookup - Groups",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/lookups/groups?category_id=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "lookups", "groups"],
+              "query": [
+                { "key": "category_id", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Lookup - Units",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/lookups/units",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "lookups", "units"]
+            }
+          }
+        },
+        {
+          "name": "Lookup - Instruments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/lookups/instruments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "lookups", "instruments"]
+            }
+          }
+        },
+        {
+          "name": "Lookup - Vendors",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/lookups/vendors?is_approved=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "lookups", "vendors"],
+              "query": [
+                { "key": "is_approved", "value": "true", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Lookup - Sampling Plans",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/lookups/sampling-plans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "lookups", "sampling-plans"]
+            }
+          }
+        },
+        {
+          "name": "Lookup - QC Plans",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/lookups/qc-plans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "lookups", "qc-plans"]
+            }
+          }
+        },
+        {
+          "name": "Lookup - Departments",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/lookups/departments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "lookups", "departments"]
+            }
+          }
+        },
+        {
+          "name": "Lookup - Defect Types",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/lookups/defect-types",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "lookups", "defect-types"]
+            }
+          }
+        },
+        {
+          "name": "Lookup - Rejection Reasons",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/lookups/rejection-reasons",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "lookups", "rejection-reasons"]
+            }
+          }
+        },
+        {
+          "name": "Lookup - Locations",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/lookups/locations?location_type=store",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "lookups", "locations"],
+              "query": [
+                { "key": "location_type", "value": "store", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Lookup - Users",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/lookups/users?department_id=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "lookups", "users"],
+              "query": [
+                { "key": "department_id", "value": "1", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Lookup - Roles",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/lookups/roles",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "lookups", "roles"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
