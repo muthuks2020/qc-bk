@@ -1,0 +1,3013 @@
+{
+  "info": {
+    "_postman_id": "appasamy-qc-api-v1",
+    "name": "Appasamy QC API \u2014 Stage 1 (82 Endpoints)",
+    "description": "Complete Postman collection for the Appasamy QC Application Backend API.\n\nStack: Python 3.11+ / Flask / PostgreSQL / AWS EC2\nDatabase: qc_holistic_schema_v4.sql (42 tables, 14 modules)\n\n## Auth Setup\nAll endpoints (except /health) require these headers:\n- Authorization: Bearer {{auth_token}}\n- X-User-Id: {{user_id}}\n- X-User-Name: {{user_name}}\n- X-User-Role: {{user_role}}\n- X-User-Email: {{user_email}}\n\n## Quick Start\n1. Import this collection\n2. Select the 'Appasamy QC - Local Dev' environment\n3. Run the Health Check request first\n4. Proceed module by module",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "Authorization",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "Bearer {{auth_token}}",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set common auth headers for every request",
+          "pm.request.headers.upsert({ key: 'X-User-Id', value: pm.environment.get('user_id') || '1' });",
+          "pm.request.headers.upsert({ key: 'X-User-Name', value: pm.environment.get('user_name') || 'Admin User' });",
+          "pm.request.headers.upsert({ key: 'X-User-Role', value: pm.environment.get('user_role') || 'admin' });",
+          "pm.request.headers.upsert({ key: 'X-User-Email', value: pm.environment.get('user_email') || 'admin@appasamy.com' });"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000/api/v1"
+    }
+  ],
+  "item": [
+    {
+      "name": "00 \u2014 Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "No auth required. Returns API status and DB connectivity."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('DB connected', () => { let j = pm.response.json(); pm.expect(j.database).to.eql('connected'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 \u2014 Departments",
+      "description": "Department master management (3 endpoints)",
+      "item": [
+        {
+          "name": "List Departments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/departments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "departments"
+              ],
+              "query": [
+                {
+                  "key": "is_active",
+                  "value": "true",
+                  "description": "Filter active only"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by code or name"
+                }
+              ]
+            },
+            "description": "List all departments. Supports ?is_active=true and ?search=keyword."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => { let j = pm.response.json(); pm.expect(j.data).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Department",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/departments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "departments"
+              ]
+            },
+            "description": "Create a new department. Requires admin role.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"department_code\": \"DEPT-TEST\",\n  \"department_name\": \"Test Department\",\n  \"department_head\": \"Test Manager\",\n  \"manager_id\": null,\n  \"location\": \"Chennai\",\n  \"is_active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) { let j = pm.response.json(); pm.environment.set('dept_id', j.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Department",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/departments/{{dept_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "departments",
+                "{{dept_id}}"
+              ]
+            },
+            "description": "Update an existing department. Requires admin role.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"department_name\": \"Test Department Updated\",\n  \"location\": \"Puducherry\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete (Deactivate) Department",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/departments/{{dept_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "departments",
+                "{{dept_id}}"
+              ]
+            },
+            "description": "Soft-delete (deactivate) a department. Requires admin role."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 \u2014 Categories & Groups",
+      "description": "Product categories and product groups (8 endpoints)",
+      "item": [
+        {
+          "name": "List Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categories"
+              ],
+              "query": [
+                {
+                  "key": "is_active",
+                  "value": "true",
+                  "description": "Filter active only"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by code or name"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) { let j = pm.response.json(); if (j.data && j.data.length > 0) pm.environment.set('category_id', j.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categories",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categories"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_code\": \"CAT-TEST\",\n  \"category_name\": \"Test Category\",\n  \"description\": \"Test category for Postman\",\n  \"sort_order\": 99\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) { let j = pm.response.json(); pm.environment.set('category_id', j.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Category",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categories",
+                "{{category_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_name\": \"Test Category Updated\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete (Deactivate) Category",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categories",
+                "{{category_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "List Groups for Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}/groups",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categories",
+                "{{category_id}}",
+                "groups"
+              ],
+              "query": [
+                {
+                  "key": "is_active",
+                  "value": "true",
+                  "description": "Filter active only"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Group",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}/groups",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categories",
+                "{{category_id}}",
+                "groups"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"group_code\": \"GRP-TEST\",\n  \"group_name\": \"Test Group\",\n  \"description\": \"Test product group\",\n  \"sort_order\": 99\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) { let j = pm.response.json(); pm.environment.set('group_id', j.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Group",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}/groups/{{group_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categories",
+                "{{category_id}}",
+                "groups",
+                "{{group_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"group_name\": \"Test Group Updated\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete (Deactivate) Group",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}/groups/{{group_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "categories",
+                "{{category_id}}",
+                "groups",
+                "{{group_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 \u2014 Units of Measurement",
+      "description": "UOM master (3 endpoints)",
+      "item": [
+        {
+          "name": "List Units",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/units",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "units"
+              ],
+              "query": [
+                {
+                  "key": "is_active",
+                  "value": "true",
+                  "description": "Filter active only"
+                },
+                {
+                  "key": "unit_type",
+                  "value": "",
+                  "description": "Filter by type: length, weight, volume, count, etc."
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) { let j = pm.response.json(); if (j.data && j.data.length > 0) pm.environment.set('unit_id', j.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Unit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/units",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "units"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"unit_code\": \"UNT-TEST\",\n  \"unit_name\": \"Test Unit\",\n  \"unit_symbol\": \"tu\",\n  \"unit_type\": \"count\",\n  \"description\": \"Test unit of measurement\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) { let j = pm.response.json(); pm.environment.set('unit_id', j.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete (Deactivate) Unit",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/units/{{unit_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "units",
+                "{{unit_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 \u2014 Instruments",
+      "description": "Measuring instruments master (4 endpoints)",
+      "item": [
+        {
+          "name": "List Instruments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/instruments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "instruments"
+              ],
+              "query": [
+                {
+                  "key": "is_active",
+                  "value": "true",
+                  "description": "Filter active only"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by code or name"
+                },
+                {
+                  "key": "instrument_type",
+                  "value": "",
+                  "description": "Filter by type"
+                },
+                {
+                  "key": "calibration_status",
+                  "value": "",
+                  "description": "Filter: valid, expiring_soon, expired, not_calibrated"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) { let j = pm.response.json(); if (j.data && j.data.length > 0) pm.environment.set('instrument_id', j.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Instrument",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/instruments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "instruments"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"instrument_code\": \"INS-TEST-001\",\n  \"instrument_name\": \"Test Vernier Caliper\",\n  \"instrument_type\": \"caliper\",\n  \"make\": \"Mitutoyo\",\n  \"model\": \"CD-6 ASX\",\n  \"serial_number\": \"SN-TEST-001\",\n  \"range_min\": 0,\n  \"range_max\": 150,\n  \"least_count\": 0.01,\n  \"department_id\": 1,\n  \"calibration_frequency_days\": 365,\n  \"last_calibrated_date\": \"2025-12-01\",\n  \"calibration_due_date\": \"2026-12-01\",\n  \"calibrated_by\": \"National Lab\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) { let j = pm.response.json(); pm.environment.set('instrument_id', j.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Instrument",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/instruments/{{instrument_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "instruments",
+                "{{instrument_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"instrument_name\": \"Test Vernier Caliper Updated\",\n  \"calibrated_by\": \"External Lab\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete (Deactivate) Instrument",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/instruments/{{instrument_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "instruments",
+                "{{instrument_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 \u2014 Vendors",
+      "description": "Vendor/supplier master (4 endpoints)",
+      "item": [
+        {
+          "name": "List Vendors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/vendors",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "vendors"
+              ],
+              "query": [
+                {
+                  "key": "is_active",
+                  "value": "true",
+                  "description": "Filter active only"
+                },
+                {
+                  "key": "is_approved",
+                  "value": "true",
+                  "description": "Filter approved vendors"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by code, name, or city"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "vendor_name",
+                  "description": "Sort field: vendor_name, vendor_code, city, created_at"
+                },
+                {
+                  "key": "sort_order",
+                  "value": "asc",
+                  "description": "asc or desc"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) { let j = pm.response.json(); if (j.data && j.data.length > 0) pm.environment.set('vendor_id', j.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Vendor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/vendors",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "vendors"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vendor_code\": \"VEN-TEST-001\",\n  \"vendor_name\": \"Test Supplier Pvt Ltd\",\n  \"vendor_type\": \"supplier\",\n  \"contact_person\": \"Ravi Kumar\",\n  \"email\": \"ravi@testsupplier.com\",\n  \"phone\": \"044-28175500\",\n  \"mobile\": \"9876543210\",\n  \"address_line1\": \"123 Industrial Estate\",\n  \"address_line2\": \"Guindy\",\n  \"city\": \"Chennai\",\n  \"state\": \"Tamil Nadu\",\n  \"country\": \"India\",\n  \"pincode\": \"600032\",\n  \"gst_number\": \"33AABCT1234F1ZP\",\n  \"pan_number\": \"AABCT1234F\",\n  \"is_approved\": true,\n  \"quality_rating\": 4.5,\n  \"delivery_rating\": 4.0\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) { let j = pm.response.json(); pm.environment.set('vendor_id', j.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Vendor",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/vendors/{{vendor_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "vendors",
+                "{{vendor_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vendor_name\": \"Test Supplier Pvt Ltd (Updated)\",\n  \"quality_rating\": 4.8,\n  \"is_approved\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete (Deactivate) Vendor",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/vendors/{{vendor_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "vendors",
+                "{{vendor_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 \u2014 Sampling Plans",
+      "description": "AQL-based sampling plans with lot-size ranges (6 endpoints)",
+      "item": [
+        {
+          "name": "List Sampling Plans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sampling-plans",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sampling-plans"
+              ],
+              "query": [
+                {
+                  "key": "is_active",
+                  "value": "true",
+                  "description": "Filter active only"
+                },
+                {
+                  "key": "plan_type",
+                  "value": "",
+                  "description": "Filter by type: aql_based, fixed, custom"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by code or name"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) { let j = pm.response.json(); if (j.data && j.data.length > 0) pm.environment.set('sampling_plan_id', j.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Sampling Plan by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sampling-plans/{{sampling_plan_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sampling-plans",
+                "{{sampling_plan_id}}"
+              ]
+            },
+            "description": "Get full plan with lot-size detail rows."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Sampling Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sampling-plans",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sampling-plans"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_code\": \"SP-TEST-001\",\n  \"plan_name\": \"Test AQL Plan\",\n  \"plan_type\": \"aql_based\",\n  \"aql_level\": \"1.0\",\n  \"inspection_level\": \"II\",\n  \"details\": [\n    {\n      \"lot_size_min\": 2,\n      \"lot_size_max\": 8,\n      \"sample_size\": 2,\n      \"accept_number\": 0,\n      \"reject_number\": 1\n    },\n    {\n      \"lot_size_min\": 9,\n      \"lot_size_max\": 15,\n      \"sample_size\": 3,\n      \"accept_number\": 0,\n      \"reject_number\": 1\n    },\n    {\n      \"lot_size_min\": 16,\n      \"lot_size_max\": 25,\n      \"sample_size\": 5,\n      \"accept_number\": 0,\n      \"reject_number\": 1\n    },\n    {\n      \"lot_size_min\": 26,\n      \"lot_size_max\": 50,\n      \"sample_size\": 8,\n      \"accept_number\": 0,\n      \"reject_number\": 1\n    },\n    {\n      \"lot_size_min\": 51,\n      \"lot_size_max\": 90,\n      \"sample_size\": 13,\n      \"accept_number\": 1,\n      \"reject_number\": 2\n    },\n    {\n      \"lot_size_min\": 91,\n      \"lot_size_max\": 150,\n      \"sample_size\": 20,\n      \"accept_number\": 1,\n      \"reject_number\": 2\n    },\n    {\n      \"lot_size_min\": 151,\n      \"lot_size_max\": 500,\n      \"sample_size\": 32,\n      \"accept_number\": 2,\n      \"reject_number\": 3\n    },\n    {\n      \"lot_size_min\": 501,\n      \"lot_size_max\": 1200,\n      \"sample_size\": 50,\n      \"accept_number\": 3,\n      \"reject_number\": 4\n    },\n    {\n      \"lot_size_min\": 1201,\n      \"lot_size_max\": 10000,\n      \"sample_size\": 80,\n      \"accept_number\": 5,\n      \"reject_number\": 6\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) { let j = pm.response.json(); pm.environment.set('sampling_plan_id', j.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Sampling Plan",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sampling-plans/{{sampling_plan_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sampling-plans",
+                "{{sampling_plan_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_name\": \"Test AQL Plan (Updated)\",\n  \"aql_level\": \"1.5\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete (Deactivate) Sampling Plan",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sampling-plans/{{sampling_plan_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sampling-plans",
+                "{{sampling_plan_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Calculate Sample Size",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sampling-plans/{{sampling_plan_id}}/calculate-sample",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "sampling-plans",
+                "{{sampling_plan_id}}",
+                "calculate-sample"
+              ],
+              "query": [
+                {
+                  "key": "lot_size",
+                  "value": "100",
+                  "description": "The incoming lot quantity"
+                }
+              ]
+            },
+            "description": "Given a lot_size, returns the matching sample size, accept/reject numbers."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Has sample_size', () => { let j = pm.response.json(); pm.expect(j.data.sample_size).to.be.a('number'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 \u2014 QC Plans",
+      "description": "QC inspection plans with stages and parameters (5 endpoints)",
+      "item": [
+        {
+          "name": "List QC Plans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/qc-plans",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "qc-plans"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Filter by status: draft, active, superseded"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by code or name"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) { let j = pm.response.json(); if (j.data && j.data.length > 0) pm.environment.set('qc_plan_id', j.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get QC Plan by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/qc-plans/{{qc_plan_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "qc-plans",
+                "{{qc_plan_id}}"
+              ]
+            },
+            "description": "Full QC plan with stages \u2192 parameters."
+          },
+          "response": []
+        },
+        {
+          "name": "Create QC Plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/qc-plans",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "qc-plans"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_code\": \"QCP-TEST-001\",\n  \"plan_name\": \"Test Inspection Plan\",\n  \"revision\": \"Rev.01\",\n  \"revision_date\": \"2026-01-15\",\n  \"effective_date\": \"2026-02-01\",\n  \"plan_type\": \"standard\",\n  \"inspection_stages\": 2,\n  \"requires_visual\": true,\n  \"requires_functional\": false,\n  \"document_number\": \"DOC-QCP-TEST-001\",\n  \"status\": \"draft\",\n  \"stages\": [\n    {\n      \"stage_name\": \"Visual Inspection\",\n      \"stage_sequence\": 1,\n      \"stage_type\": \"visual\",\n      \"is_mandatory\": true,\n      \"sampling_plan_id\": null,\n      \"parameters\": [\n        {\n          \"parameter_name\": \"Surface Finish\",\n          \"parameter_sequence\": 1,\n          \"checking_type\": \"visual\",\n          \"specification\": \"No scratches, dents, or burrs\",\n          \"input_type\": \"pass_fail\",\n          \"is_mandatory\": true,\n          \"acceptance_criteria\": \"Zero defects\"\n        }\n      ]\n    },\n    {\n      \"stage_name\": \"Dimensional Check\",\n      \"stage_sequence\": 2,\n      \"stage_type\": \"dimensional\",\n      \"is_mandatory\": true,\n      \"parameters\": [\n        {\n          \"parameter_name\": \"Overall Length\",\n          \"parameter_sequence\": 1,\n          \"checking_type\": \"measurement\",\n          \"specification\": \"50.00 \\u00b1 0.05 mm\",\n          \"nominal_value\": 50.0,\n          \"tolerance_min\": 49.95,\n          \"tolerance_max\": 50.05,\n          \"unit_id\": 1,\n          \"instrument_id\": 1,\n          \"input_type\": \"numeric\",\n          \"is_mandatory\": true,\n          \"acceptance_criteria\": \"Within tolerance\"\n        }\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) { let j = pm.response.json(); pm.environment.set('qc_plan_id', j.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update QC Plan",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/qc-plans/{{qc_plan_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "qc-plans",
+                "{{qc_plan_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_name\": \"Test Inspection Plan (Updated)\",\n  \"status\": \"active\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete (Deactivate) QC Plan",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/qc-plans/{{qc_plan_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "qc-plans",
+                "{{qc_plan_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08 \u2014 Components",
+      "description": "Component master with checking params, specs, documents, vendors (10 endpoints)",
+      "item": [
+        {
+          "name": "List Components",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/components",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "components"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search by code, part_code, or part_name"
+                },
+                {
+                  "key": "category_id",
+                  "value": "",
+                  "description": "Filter by category"
+                },
+                {
+                  "key": "product_group_id",
+                  "value": "",
+                  "description": "Filter by product group"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Filter: draft, active, inactive"
+                },
+                {
+                  "key": "qc_required",
+                  "value": "",
+                  "description": "Filter: true/false"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "part_code",
+                  "description": "Sort field: part_code, part_name, created_at, updated_at"
+                },
+                {
+                  "key": "sort_order",
+                  "value": "asc",
+                  "description": "asc or desc"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) { let j = pm.response.json(); if (j.data && j.data.length > 0) pm.environment.set('component_id', j.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Component by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/components/{{component_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "components",
+                "{{component_id}}"
+              ]
+            },
+            "description": "Full component with checking_parameters, specifications, documents, vendors."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Component",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/components",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "components"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"part_code\": \"CMP-TEST-001\",\n  \"part_name\": \"Test IOL Lens Body\",\n  \"part_description\": \"Test component for Postman collection\",\n  \"category_id\": 1,\n  \"product_group_id\": 1,\n  \"qc_required\": true,\n  \"qc_plan_id\": null,\n  \"default_inspection_type\": \"sampling\",\n  \"default_sampling_plan_id\": null,\n  \"test_cert_required\": true,\n  \"spec_required\": true,\n  \"fqir_required\": false,\n  \"coc_required\": true,\n  \"skip_lot_enabled\": true,\n  \"skip_lot_count\": 3,\n  \"skip_lot_threshold\": 5,\n  \"department_id\": 1,\n  \"primary_vendor_id\": null,\n  \"pr_process_code\": \"PR-001\",\n  \"pr_process_name\": \"Injection Molding\",\n  \"drawing_no\": \"DWG-TEST-001\",\n  \"status\": \"draft\",\n  \"checking_parameters\": [\n    {\n      \"checking_type\": \"measurement\",\n      \"checking_point\": \"Outer Diameter\",\n      \"specification\": \"13.00 \\u00b1 0.02 mm\",\n      \"nominal_value\": 13.0,\n      \"tolerance_min\": 12.98,\n      \"tolerance_max\": 13.02,\n      \"unit_id\": 1,\n      \"instrument_id\": 1,\n      \"input_type\": \"numeric\",\n      \"sort_order\": 1,\n      \"is_mandatory\": true\n    },\n    {\n      \"checking_type\": \"visual\",\n      \"checking_point\": \"Surface Quality\",\n      \"specification\": \"No visible defects\",\n      \"input_type\": \"pass_fail\",\n      \"sort_order\": 2,\n      \"is_mandatory\": true\n    }\n  ],\n  \"specifications\": [\n    {\n      \"spec_key\": \"Material\",\n      \"spec_value\": \"PMMA\",\n      \"sort_order\": 1\n    },\n    {\n      \"spec_key\": \"Color\",\n      \"spec_value\": \"Clear\",\n      \"sort_order\": 2\n    }\n  ],\n  \"approved_vendors\": [\n    {\n      \"vendor_id\": 1,\n      \"is_primary\": true,\n      \"unit_price\": 150.5,\n      \"lead_time_days\": 14\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) { let j = pm.response.json(); pm.environment.set('component_id', j.data.id); pm.environment.set('component_code', j.data.component_code); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Component",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/components/{{component_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "components",
+                "{{component_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"part_name\": \"Test IOL Lens Body (Updated)\",\n  \"status\": \"active\",\n  \"checking_parameters\": [\n    {\n      \"checking_type\": \"measurement\",\n      \"checking_point\": \"Outer Diameter\",\n      \"specification\": \"13.00 \\u00b1 0.03 mm\",\n      \"nominal_value\": 13.0,\n      \"tolerance_min\": 12.97,\n      \"tolerance_max\": 13.03,\n      \"unit_id\": 1,\n      \"instrument_id\": 1,\n      \"input_type\": \"numeric\",\n      \"sort_order\": 1,\n      \"is_mandatory\": true\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Component",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/components/{{component_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "components",
+                "{{component_id}}"
+              ]
+            },
+            "description": "Soft-delete. Sets is_deleted=true, status=inactive."
+          },
+          "response": []
+        },
+        {
+          "name": "Duplicate Component",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/components/{{component_id}}/duplicate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "components",
+                "{{component_id}}",
+                "duplicate"
+              ]
+            },
+            "description": "Creates a copy with '-COPY' suffix. Copies checking params, specs, vendors."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) { let j = pm.response.json(); pm.environment.set('duplicated_component_id', j.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validate Part Code",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/components/validate-part-code",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "components",
+                "validate-part-code"
+              ],
+              "query": [
+                {
+                  "key": "part_code",
+                  "value": "CMP-TEST-001",
+                  "description": "Part code to check"
+                }
+              ]
+            },
+            "description": "Check if a part_code is already in use."
+          },
+          "response": []
+        },
+        {
+          "name": "Upload Component Document",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/components/upload-document",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "components",
+                "upload-document"
+              ]
+            },
+            "description": "Upload a document (drawing, test_cert, fqir, coc, specification, spec_sheet, other).",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "component_id",
+                  "value": "{{component_id}}",
+                  "type": "text"
+                },
+                {
+                  "key": "document_type",
+                  "value": "drawing",
+                  "type": "text"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Component Document",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/components/documents/1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "components",
+                "documents",
+                "1"
+              ]
+            },
+            "description": "Permanently delete a document by doc ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Export Components (Excel)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/components/export",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "components",
+                "export"
+              ]
+            },
+            "description": "Export components to Excel (.xlsx). Returns binary file download.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_id\": null,\n  \"status\": null,\n  \"ids\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09 \u2014 Defect Types",
+      "description": "Defect type master (4 endpoints)",
+      "item": [
+        {
+          "name": "List Defect Types",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/defect-types",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "defect-types"
+              ],
+              "query": [
+                {
+                  "key": "is_active",
+                  "value": "true",
+                  "description": "Filter active only"
+                },
+                {
+                  "key": "severity_level",
+                  "value": "",
+                  "description": "Filter by severity: 1, 2, 3"
+                },
+                {
+                  "key": "defect_category",
+                  "value": "",
+                  "description": "Filter: critical, major, minor"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) { let j = pm.response.json(); if (j.data && j.data.length > 0) pm.environment.set('defect_type_id', j.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Defect Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/defect-types",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "defect-types"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"defect_code\": \"DEF-TEST-001\",\n  \"defect_name\": \"Test Surface Scratch\",\n  \"defect_category\": \"minor\",\n  \"severity_level\": 1,\n  \"description\": \"Minor surface scratch visible under magnification\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) { let j = pm.response.json(); pm.environment.set('defect_type_id', j.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Defect Type",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/defect-types/{{defect_type_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "defect-types",
+                "{{defect_type_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"defect_name\": \"Test Surface Scratch (Updated)\",\n  \"severity_level\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete (Deactivate) Defect Type",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/defect-types/{{defect_type_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "defect-types",
+                "{{defect_type_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "10 \u2014 Rejection Reasons",
+      "description": "Rejection reason master (4 endpoints)",
+      "item": [
+        {
+          "name": "List Rejection Reasons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rejection-reasons",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "rejection-reasons"
+              ],
+              "query": [
+                {
+                  "key": "is_active",
+                  "value": "true",
+                  "description": "Filter active only"
+                },
+                {
+                  "key": "reason_category",
+                  "value": "",
+                  "description": "Filter by category"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) { let j = pm.response.json(); if (j.data && j.data.length > 0) pm.environment.set('rejection_reason_id', j.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Rejection Reason",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rejection-reasons",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "rejection-reasons"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason_code\": \"REJ-TEST-001\",\n  \"reason_name\": \"Test Dimensional Out-of-Spec\",\n  \"reason_category\": \"dimensional\",\n  \"description\": \"Component dimensions outside tolerance limits\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) { let j = pm.response.json(); pm.environment.set('rejection_reason_id', j.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Rejection Reason",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rejection-reasons/{{rejection_reason_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "rejection-reasons",
+                "{{rejection_reason_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason_name\": \"Test Dimensional Out-of-Spec (Updated)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete (Deactivate) Rejection Reason",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/rejection-reasons/{{rejection_reason_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "rejection-reasons",
+                "{{rejection_reason_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "11 \u2014 Locations",
+      "description": "Warehouse / store locations (4 endpoints)",
+      "item": [
+        {
+          "name": "List Locations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/locations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "locations"
+              ],
+              "query": [
+                {
+                  "key": "is_active",
+                  "value": "true",
+                  "description": "Filter active only"
+                },
+                {
+                  "key": "location_type",
+                  "value": "",
+                  "description": "Filter: store, quarantine, vendor, production"
+                },
+                {
+                  "key": "is_quarantine",
+                  "value": "",
+                  "description": "Filter quarantine locations: true/false"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) { let j = pm.response.json(); if (j.data && j.data.length > 0) pm.environment.set('location_id', j.data[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Location",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/locations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "locations"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location_code\": \"LOC-TEST-001\",\n  \"location_name\": \"Test Quarantine Bay\",\n  \"location_type\": \"quarantine\",\n  \"warehouse_name\": \"Main Warehouse\",\n  \"is_quarantine\": true,\n  \"is_restricted\": true,\n  \"parent_location_id\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) { let j = pm.response.json(); pm.environment.set('location_id', j.data.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Location",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/locations/{{location_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "locations",
+                "{{location_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location_name\": \"Test Quarantine Bay (Updated)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete (Deactivate) Location",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/locations/{{location_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "locations",
+                "{{location_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "12 \u2014 System Configuration",
+      "description": "App-wide settings (2 endpoints). Requires admin/checker for GET, admin for PUT.",
+      "item": [
+        {
+          "name": "Get System Config",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/system-config",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "system-config"
+              ],
+              "query": [
+                {
+                  "key": "module",
+                  "value": "",
+                  "description": "Filter by module: system, grn, inspection, return, notification, auth, integration"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update System Config",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/system-config/inspection.overdue_days",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "system-config",
+                "inspection.overdue_days"
+              ]
+            },
+            "description": "Update a config value by key. Only editable configs can be changed.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"config_value\": \"10\",\n  \"config_type\": \"number\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "13 \u2014 Lookups (Dropdowns)",
+      "description": "Lightweight lookup endpoints for populating dropdowns in the React frontend (13 endpoints).",
+      "item": [
+        {
+          "name": "Lookup \u2014 Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lookups/categories",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lookups",
+                "categories"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Lookup \u2014 Groups",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lookups/groups",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lookups",
+                "groups"
+              ],
+              "query": [
+                {
+                  "key": "category_id",
+                  "value": "",
+                  "description": "Filter by parent category"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Lookup \u2014 Units",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lookups/units",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lookups",
+                "units"
+              ],
+              "query": [
+                {
+                  "key": "unit_type",
+                  "value": "",
+                  "description": "Filter by type: length, weight, volume, count"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Lookup \u2014 Instruments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lookups/instruments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lookups",
+                "instruments"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Lookup \u2014 Vendors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lookups/vendors",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lookups",
+                "vendors"
+              ],
+              "query": [
+                {
+                  "key": "approved_only",
+                  "value": "true",
+                  "description": "Only approved vendors"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Lookup \u2014 Sampling Plans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lookups/sampling-plans",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lookups",
+                "sampling-plans"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Lookup \u2014 QC Plans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lookups/qc-plans",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lookups",
+                "qc-plans"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Lookup \u2014 Departments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lookups/departments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lookups",
+                "departments"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Lookup \u2014 Defect Types",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lookups/defect-types",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lookups",
+                "defect-types"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Lookup \u2014 Rejection Reasons",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lookups/rejection-reasons",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lookups",
+                "rejection-reasons"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Lookup \u2014 Locations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lookups/locations",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lookups",
+                "locations"
+              ],
+              "query": [
+                {
+                  "key": "location_type",
+                  "value": "",
+                  "description": "Filter: store, quarantine, vendor, production"
+                },
+                {
+                  "key": "is_quarantine",
+                  "value": "",
+                  "description": "true/false"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Lookup \u2014 Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lookups/users",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lookups",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "role",
+                  "value": "",
+                  "description": "Filter by role: admin, maker, checker, approver"
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Lookup \u2014 Roles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/lookups/roles",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "lookups",
+                "roles"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "14 \u2014 Role-Based Access Tests",
+      "description": "Test that non-admin roles are properly restricted. Change X-User-Role header per request.",
+      "item": [
+        {
+          "name": "Maker \u2014 Can List Components (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/components",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "components"
+              ]
+            },
+            "description": "Makers should be able to read components."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.request.headers.upsert({ key: 'X-User-Role', value: 'maker' });",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Maker \u2014 Cannot Create Department (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/departments",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "departments"
+              ]
+            },
+            "description": "Makers should NOT be able to create departments.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"department_code\": \"DEPT-UNAUTH\",\n  \"department_name\": \"Unauthorized\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.request.headers.upsert({ key: 'X-User-Role', value: 'maker' });",
+                  "pm.test('Status 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Checker \u2014 Can Read System Config (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/system-config",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "system-config"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.request.headers.upsert({ key: 'X-User-Role', value: 'checker' });",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Checker \u2014 Cannot Update System Config (403)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/system-config/app.name",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "system-config",
+                "app.name"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"config_value\": \"Hacked\",\n  \"config_type\": \"string\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.request.headers.upsert({ key: 'X-User-Role', value: 'checker' });",
+                  "pm.test('Status 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "No Auth \u2014 Health Check (200)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Health check should work without any auth headers."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.request.headers.upsert({ key: 'Authorization', value: '' });",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
