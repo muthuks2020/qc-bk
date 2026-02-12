@@ -24,8 +24,10 @@ class SamplingPlanSchema(Schema):
     id = fields.Int(dump_only=True)
     plan_code = fields.Str(required=True, validate=validate.Length(min=1, max=50))
     plan_name = fields.Str(required=True, validate=validate.Length(min=1, max=200))
-    plan_type = fields.Str(load_default='normal', validate=validate.OneOf([
-        'normal', 'tightened', 'reduced', 'sp0', 'sp1', 'sp2', 'sp3'
+    plan_type = fields.Str(load_default='aql_based', validate=validate.OneOf([
+        'aql_based', 'fixed', 'custom',                      # Postman / frontend values
+        'normal', 'tightened', 'reduced',                     # Legacy values
+        'sp0', 'sp1', 'sp2', 'sp3'                           # DB comment values
     ]))
     aql_level = fields.Str(validate=validate.Length(max=50), load_default=None)
     inspection_level = fields.Str(validate=validate.Length(max=50), load_default=None)
@@ -44,30 +46,3 @@ class SamplingPlanSchema(Schema):
             if key in data and data[key]:
                 data[key] = sanitize_string(data[key])
         return data
-
-    @validates_schema
-    def validate_details(self, data, **kwargs):
-        details = data.get('details', [])
-        if not details:
-            return  # Allow empty on update, enforce in route for create
-
-        # Sort by lot_size_min
-        sorted_details = sorted(details, key=lambda d: d.get('lot_size_min', 0))
-        errors = []
-
-        for i, detail in enumerate(sorted_details):
-            row_num = i + 1
-            # Check overlap with other rows
-            for j, other in enumerate(sorted_details):
-                if i >= j:
-                    continue
-                if not (detail['lot_size_max'] < other['lot_size_min'] or
-                        other['lot_size_max'] < detail['lot_size_min']):
-                    errors.append({
-                        'field': f'details[{row_num}]',
-                        'message': f'Row {row_num}: lot_size range ({detail["lot_size_min"]}-{detail["lot_size_max"]}) '
-                                   f'overlaps with Row {j + 1} ({other["lot_size_min"]}-{other["lot_size_max"]})'
-                    })
-
-        if errors:
-            raise ValidationError(errors, 'details')

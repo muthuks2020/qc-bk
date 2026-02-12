@@ -8,7 +8,7 @@ class QCPlanParameterSchema(Schema):
     parameter_name = fields.Str(required=True, validate=validate.Length(min=1, max=200))
     parameter_sequence = fields.Int(load_default=0)
     checking_type = fields.Str(required=True, validate=validate.OneOf([
-        'visual', 'functional', 'dimensional', 'electrical', 'weight'
+        'visual', 'functional', 'dimensional', 'electrical', 'weight', 'measurement'
     ]))
     specification = fields.Str(validate=validate.Length(max=500), load_default=None)
     unit_id = fields.Int(load_default=None, allow_none=True)
@@ -17,7 +17,7 @@ class QCPlanParameterSchema(Schema):
     tolerance_max = fields.Decimal(load_default=None, allow_none=True, as_string=True)
     instrument_id = fields.Int(load_default=None, allow_none=True)
     input_type = fields.Str(load_default='measurement', validate=validate.OneOf([
-        'measurement', 'pass_fail', 'yes_no', 'text'
+        'measurement', 'pass_fail', 'yes_no', 'text', 'numeric'
     ]))
     is_mandatory = fields.Bool(load_default=True)
     acceptance_criteria = fields.Str(validate=validate.Length(max=500), load_default=None)
@@ -39,7 +39,9 @@ class QCPlanStageSchema(Schema):
     id = fields.Int(dump_only=True)
     stage_code = fields.Str(validate=validate.Length(max=50), load_default=None)
     stage_name = fields.Str(required=True, validate=validate.Length(min=1, max=100))
-    stage_type = fields.Str(required=True, validate=validate.OneOf(['visual', 'functional']))
+    stage_type = fields.Str(required=True, validate=validate.OneOf([
+        'visual', 'functional', 'dimensional', 'electrical', 'weight'
+    ]))
     stage_sequence = fields.Int(required=True, validate=validate.Range(min=1))
     inspection_type = fields.Str(load_default='sampling', validate=validate.OneOf([
         'sampling', '100_percent'
@@ -67,24 +69,30 @@ class QCPlanSchema(Schema):
     id = fields.Int(dump_only=True)
     plan_code = fields.Str(required=True, validate=validate.Length(min=1, max=50))
     plan_name = fields.Str(required=True, validate=validate.Length(min=1, max=200))
-    plan_type = fields.Str(load_default='standard', validate=validate.OneOf(['standard', 'custom']))
+    plan_type = fields.Str(load_default='standard', validate=validate.OneOf([
+        'standard', 'custom', 'incoming', 'in_process', 'final'
+    ]))
     revision = fields.Str(validate=validate.Length(max=50), load_default=None)
     revision_date = fields.Date(load_default=None, allow_none=True)
     effective_date = fields.Date(load_default=None, allow_none=True)
+    inspection_stages = fields.Int(load_default=1)
     requires_visual = fields.Bool(load_default=True)
     requires_functional = fields.Bool(load_default=False)
     document_number = fields.Str(validate=validate.Length(max=100), load_default=None)
-    status = fields.Str(dump_only=True)
+    status = fields.Str(load_default='draft', validate=validate.OneOf([
+        'draft', 'active', 'superseded', 'archived'
+    ]))
     is_active = fields.Bool(dump_only=True)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
 
+    # Nested
     stages = fields.List(fields.Nested(QCPlanStageSchema), load_default=[])
 
     # Response-only
     stages_count = fields.Int(dump_only=True)
-    parameters_count = fields.Int(dump_only=True)
-    components_using = fields.Int(dump_only=True)
+    total_parameters = fields.Int(dump_only=True)
+    referenced_by_components = fields.Int(dump_only=True)
 
     @pre_load
     def sanitize(self, data, **kwargs):
@@ -92,36 +100,3 @@ class QCPlanSchema(Schema):
             if key in data and data[key]:
                 data[key] = sanitize_string(data[key])
         return data
-
-    @validates_schema
-    def validate_stages(self, data, **kwargs):
-        stages = data.get('stages', [])
-        if not stages:
-            return
-
-        errors = []
-        sequences = []
-        has_visual = False
-        has_functional = False
-
-        for i, stage in enumerate(stages):
-            seq = stage.get('stage_sequence')
-            if seq in sequences:
-                errors.append({'field': f'stages[{i}].stage_sequence',
-                               'message': f'Duplicate stage_sequence: {seq}'})
-            sequences.append(seq)
-
-            if stage.get('stage_type') == 'visual':
-                has_visual = True
-            if stage.get('stage_type') == 'functional':
-                has_functional = True
-
-        if data.get('requires_visual') and not has_visual:
-            errors.append({'field': 'stages',
-                           'message': 'At least one visual stage required when requires_visual=true'})
-        if data.get('requires_functional') and not has_functional:
-            errors.append({'field': 'stages',
-                           'message': 'At least one functional stage required when requires_functional=true'})
-
-        if errors:
-            raise ValidationError(errors)
